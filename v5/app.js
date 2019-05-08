@@ -1,14 +1,13 @@
 var express = require('express'),
     app = express(),
     bodyParser = require('body-parser'),
-    mongoose = require("mongoose"),
-    passport = require("passport"),
-    LocalStrategy = require("passport-local"),
+    mongoose = require('mongoose'),
+    passport = require('passport'),
+    LocalStrategy = require('passport-local'),
     Campground = require('./models/campground'),
     Comment = require("./models/comment"),
-    User = require("./models/user")
+    User = require("./models/user"),
     seedDB = require("./seeds");
-    
 
 mongoose.connect("mongodb://localhost:27017/yelp_camp", {useNewUrlParser: true});
 app.use(bodyParser.urlencoded({extended: true }));
@@ -16,21 +15,17 @@ app.set("view engine", "ejs");
 app.use(express.static(__dirname + "/public"));
 seedDB();
 
-// Campground.create(
-//     {
-//         name: "Granite Hill", 
-//         image: "https://images.unsplash.com/photo-1515408320194-59643816c5b2?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=800&q=60",
-//         description: "This is a huge granite hill park. Ground is almost all granite"
-//     }, function(err, campground){
-//         if(err){
-//             console.log("Error in Campground Creation");
-//             console.log(err);
-//         } else{
-//             console.log("Newly Created Campground: ");
-//             console.log(campground);
-//         }
-//     }
-// );
+// Passport Configuration
+app.use(require("express-session")({
+    secret: "once again Rusty wins cutest dog!",
+    resave: false,
+    saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
 
 app.get("/", function(req, res){
     res.render("landing");
@@ -117,9 +112,28 @@ app.post("/campgrounds/:id/comments", function(req, res){
     // Create a new comment
     // Connect new comment to campground
     // Redirect campground show page
-
-
 });
+
+// =======
+// Auth Routes
+// =======
+app.get("/register", function(req, res){
+    res.render("register");
+});
+
+// Handle sign up logic
+app.post("/register", function(req, res){
+    var newUser = new User({username: req.body.username});
+    User.register(newUser, req.body.password, function(err, user){
+        if(err){
+            console.log(err);
+            return res.render("register");
+        }
+        passport.authenticate("local")(req, res, function(){
+            res.redirect("/campgrounds");
+        });
+    });
+})
 
 app.listen(3000, function(){
     console.log("The YelpCamp Server has Started")
