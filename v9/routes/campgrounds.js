@@ -50,13 +50,35 @@ router.get("/:id", function(req, res){
         if(err){
             console.log(err);
         } else{
-            console.log(foundCampground);
             // Render to show remplate with that campground
             res.render("campgrounds/show", {campground: foundCampground});
         }
     });
     // Render show tamplate with that campground
 });
+
+// EDIT - Campground Route
+router.get("/:id/edit", function(req, res){
+    Campground.findById(req.params.id, function(err, foundCampground){
+        if(err){
+            res.redirect("/campgrounds");
+        }
+        res.render("campgrounds/edit", {campground: foundCampground});
+    })
+});
+
+// UPDATE - Campground Route
+router.put("/:id", function(req, res){
+    // Find and update the correct campground
+    Campground.findByIdAndUpdate(req.params.id, req.body.campground, function(err, updatedCampground){
+        if(err){
+            res.redirect("/campground");
+        } else{
+            res.redirect("/campgrounds/" + req.params.id);
+        }
+    });
+    // Redirect somewhere (show page)
+})
 
 // Middleware
 function isLoggedIn(req, res, next){
