@@ -49,8 +49,10 @@ router.get("/new", middleware.isLoggedIn, function(req, res){
 router.get("/:id", function(req, res){
     // Find the campground with provided ID
     Campground.findById(req.params.id).populate("comments").exec(function(err, foundCampground){
-        if(err){
+        if(err || !foundCampground){
             console.log(err);
+            req.flash("error", "Sorry that campground does not exist");
+            return res.redirect('/campgrounds');
         } else{
             // Render to show remplate with that campground
             res.render("campgrounds/show", {campground: foundCampground});
@@ -62,7 +64,7 @@ router.get("/:id", function(req, res){
 // EDIT - Campground Route
 router.get("/:id/edit", middleware.checkCampgroundOwnership, function(req, res){
     Campground.findById(req.params.id, function(err, foundCampground){
-    res.render("campgrounds/edit", {campground: foundCampground});
+        res.render("campgrounds/edit", {campground: foundCampground});
     });    
 });
 
